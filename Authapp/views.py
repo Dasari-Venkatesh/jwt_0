@@ -1,24 +1,30 @@
-from django.shortcuts import render
-
-# Create your views here.
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import CustomUser
-from .serializers import UserSerializer
+from .serializers import CustomUserSerializer,MyObtainTokenSerializer
+from .permissions import IsAdminUser,IsClientUser
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
-class ClientAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
+class ClientViewSet(viewsets.ModelViewSet):
 
-    def get(self, request):
-        clients = CustomUser.objects.filter(user_type='Client')
-        serializer = UserSerializer(clients, many=True)
-        return Response(serializer.data)
+    permission_classes = [IsAuthenticated,IsClientUser,]
+    authentication_classes = [JWTAuthentication,]
 
-class AdminAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
+    serializer_class = CustomUserSerializer
+    queryset = CustomUser.objects.filter(user_type='Client')
 
-    def get(self, request):
-        admins = CustomUser.objects.filter(user_type='Admin')
-        serializer = UserSerializer(admins, many=True)
-        return Response(serializer.data)
+
+
+
+class AdminViewSet(viewsets.ModelViewSet):
+
+    permission_classes = (IsAuthenticated,IsAdminUser,)
+    authentication_classes = [JWTAuthentication,]
+
+    serializer_class = CustomUserSerializer
+    queryset = CustomUser.objects.filter(user_type='Admin')
+
+
+class MyObtainTokenView(TokenObtainPairView):
+    serializer_class = MyObtainTokenSerializer
